@@ -1,0 +1,102 @@
+//Globabl Variables
+  
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  const ledgerWorkSheet = ss.getSheetByName("Ledger");
+  const dispatchWorkSheet = ss.getSheetByName("Dispatch");
+  const receivedWorkSheet = ss.getSheetByName("Received");
+  const tapesWorkSheet = ss.getSheetByName("Tapes");
+  
+  var tapesDataRange = tapesWorkSheet.getDataRange();
+  var tapesData = tapesDataRange.getValues();
+
+  const SERIAL_NUMBER = 0
+  const	TAPE_LOCATION = 1
+  const	CUSTOMER_NAME = 2
+  const	TAPE_STATUS = 3
+  const	STATUS_DATE = 4
+  const COMPLETED_BY = 5
+  
+  
+function dispatchTapes() {
+   
+  var dispatchDataRange = dispatchWorkSheet.getRange(2,1,dispatchWorkSheet.getLastRow()-1,1);
+  var dispatchData = dispatchDataRange.getValues();
+  var lastLedgerRow = ledgerWorkSheet.getLastRow();
+  var ledgerData = dispatchData.map(dispatchTapeBySerialNumber)  ;
+  
+  ledgerWorkSheet.getRange(lastLedgerRow +1,1,ledgerData.length,6).setValues(ledgerData);
+
+  //clear the sheet
+  dispatchDataRange.clearContent()
+
+}
+
+function dispatchTapeBySerialNumber(serialNumber) {
+  
+  let ledgerEntry = new Array(5);
+  let currentDate = new Date();
+  let currentUserEmailAddress = Session.getActiveUser().getEmail();
+  let tapeSerialNumber = serialNumber[0];
+  let i = tapesData.findIndex(tapesData => tapesData.includes(tapeSerialNumber));
+  let customer = tapesData[i][1];
+  let location = tapesData[i][2];
+ 
+  ledgerEntry[SERIAL_NUMBER] = tapeSerialNumber;
+  ledgerEntry[TAPE_LOCATION] = location;
+  ledgerEntry[CUSTOMER_NAME] = customer; 
+  ledgerEntry[TAPE_STATUS]  ="Dispatched"
+  ledgerEntry[STATUS_DATE] = currentDate;
+  ledgerEntry[COMPLETED_BY] = currentUserEmailAddress;
+
+  return ledgerEntry
+
+}
+
+function receiveTapes(){
+
+  var receivedDataRange = receivedWorkSheet.getRange(2,1,receivedWorkSheet.getLastRow() - 1, 1);
+  var receivedData = receivedDataRange.getValues();
+  var lastLedgerRow = ledgerWorkSheet.getLastRow();
+  var ledgerData = receivedData.map(receiveTapeBySerialNumber);
+  
+  ledgerWorkSheet.getRange(lastLedgerRow +1,1, ledgerData.length,6).setValues(ledgerData);
+
+  //clear the sheet
+  receivedDataRange.clearContent()
+
+}
+
+function receiveTapeBySerialNumber(serialNumber) {
+  
+  let ledgerEntry = new Array(5);
+  let currentDate = new Date();
+  let currentUserEmailAddress = Session.getActiveUser().getEmail();
+  let tapeSerialNumber = serialNumber[0];
+  let i = tapesData.findIndex(tapesData => tapesData.includes(tapeSerialNumber));
+  let customer = tapesData[i][1];
+  let location = tapesData[i][2];
+ 
+  ledgerEntry[SERIAL_NUMBER] = tapeSerialNumber;
+  ledgerEntry[TAPE_LOCATION] = location;
+  ledgerEntry[CUSTOMER_NAME] = customer; 
+  ledgerEntry[TAPE_STATUS]  ="Received"
+  ledgerEntry[STATUS_DATE] = currentDate;
+  ledgerEntry[COMPLETED_BY] = currentUserEmailAddress;
+
+  return ledgerEntry
+
+}
+
+
+
+function onOpen() {
+
+ SpreadsheetApp.getUi()
+ .createMenu('Tape Management')
+ .addItem('Dispatch Tapes', 'dispatchTapes')
+ .addSeparator()
+ .addItem("Receive Tapes", 'receiveTapes')
+ .addToUi();
+ 
+}
